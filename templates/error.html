@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }} &middot; Secure Login System{% endblock %}
+{% block body_class %}error-page{% endblock %}
+
+{% block content %}
+<section class="error-wrap">
+  <div class="card error-card">
+    <div class="error-code">{{ code }}</div>
+    <h1>{% if code == 404 %}Page not found{% elif code == 400 %}Request blocked{% else %}Something went wrong{% endif %}</h1>
+    <p>{{ message }}</p>
+    <div class="error-actions">
+      <a class="button" href="{{ url_for('index') }}">Return home</a>
+      <a class="button button-ghost" href="{{ url_for('login') }}">Go to sign in</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

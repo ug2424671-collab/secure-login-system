@@ -1,42 +1,68 @@
 {% extends "base.html" %}
-{% block title %}Login - SecureAuth{% endblock %}
+{% block title %}Sign in &middot; Secure Login System{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card">
-        <div class="auth-head">
-            <div class="auth-glyph">&#128274;</div>
-            <h1>Welcome back</h1>
-            <p>Step 1 of 2 &mdash; verify your password.</p>
-            <div class="steps" aria-label="Authentication progress">
-                <span class="step active">1</span>
-                <span class="step-line"></span>
-                <span class="step">2</span>
-            </div>
-        </div>
+<section class="auth-layout">
+  <aside class="auth-aside">
+    <div class="eyebrow">Welcome back</div>
+    <h1>Two steps. One trusted session.</h1>
+    <p class="aside-lead">Your password is only the first checkpoint. A short-lived code sent to the authorised inbox completes the sign-in, so a stolen password is not enough.</p>
 
-        <form method="POST" action="{{ url_for('login') }}" novalidate>
-            <div class="form-group">
-                <label for="identifier">Username or email</label>
-                <input type="text" id="identifier" name="identifier" placeholder="username or email"
-                       value="{{ request.form.identifier or '' }}" required autofocus>
-            </div>
-            <div class="form-group">
-                <div class="label-row">
-                    <label for="password">Password</label>
-                    <a class="inline-link" href="{{ url_for('forgot_password') }}">Forgot password?</a>
-                </div>
-                <input type="password" id="password" name="password" placeholder="Your password" required>
-            </div>
-            <button type="submit" class="btn btn-block">Continue to verification</button>
-        </form>
-
-        <div class="demo-note">
-            <strong>Demo account (seeded automatically):</strong><br>
-            Email: <code>kanu6a6y@gmail.com</code> &nbsp;|&nbsp; Username: <code>demo</code><br>
-            Password: <code>Demo@1234</code>
-        </div>
-
-        <p class="auth-alt">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+    <div class="security-stack">
+      <div class="security-row">
+        <span class="security-icon">&#9679;</span>
+        <span><strong>Password check</strong><small>Verified against a salted scrypt hash.</small></span>
+      </div>
+      <div class="security-row">
+        <span class="security-icon">&#9993;</span>
+        <span><strong>One-time code</strong><small>Six random digits, valid once, for five minutes.</small></span>
+      </div>
+      <div class="security-row">
+        <span class="security-icon">&#10003;</span>
+        <span><strong>Protected access</strong><small>Dashboard sessions are issued only after step two.</small></span>
+      </div>
     </div>
-</div>
+
+    <div class="aside-badge">
+      <span aria-hidden="true">&#128737;</span>
+      <span><strong>Lockout protection.</strong> Repeated failures temporarily block the account.</span>
+    </div>
+  </aside>
+
+  <div class="auth-card card">
+    <div class="card-heading">
+      <div class="eyebrow">Secure access</div>
+      <h2>Sign in to your account</h2>
+      <p>New here? <a href="{{ url_for('register') }}">Create an account</a>.</p>
+    </div>
+
+    <form method="post" action="{{ url_for('login') }}" class="form" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="field">
+        <label for="identifier">Username or email</label>
+        <input id="identifier" name="identifier" type="text" value="{{ identifier }}"
+               required autocomplete="username" placeholder="alex_carter or you@example.com"
+               autofocus spellcheck="false">
+      </div>
+
+      <div class="field">
+        <div class="label-row">
+          <label for="password">Password</label>
+          <a class="text-link" href="{{ url_for('forgot_password') }}">Forgot password?</a>
+        </div>
+        <div class="input-with-action">
+          <input id="password" name="password" type="password" required
+                 autocomplete="current-password" placeholder="Enter your password">
+          <button type="button" class="field-action" data-toggle-password="password"
+                  aria-label="Show password">Show</button>
+        </div>
+      </div>
+
+      <button type="submit" class="button button-block">Continue to verification</button>
+      <p class="form-footnote">You will receive a 6-digit code after your password is accepted.</p>
+    </form>
+  </div>
+</section>
 {% endblock %}

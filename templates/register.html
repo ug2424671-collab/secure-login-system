@@ -1,40 +1,86 @@
 {% extends "base.html" %}
-{% block title %}Register - SecureAuth{% endblock %}
+{% block title %}Create account &middot; Secure Login System{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card">
-        <div class="auth-head">
-            <div class="auth-glyph">&#128275;</div>
-            <h1>Create your account</h1>
-            <p>Register to get started with secure access.</p>
-        </div>
+<section class="auth-layout">
+  <aside class="auth-aside">
+    <div class="eyebrow">Account setup</div>
+    <h1>Security that starts before your first sign-in.</h1>
+    <p class="aside-lead">Create your account with a strong password. From then on, every sign-in needs something you know and a one-time code delivered to a protected inbox.</p>
 
-        <form method="POST" action="{{ url_for('register') }}" novalidate>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Choose a username"
-                       value="{{ request.form.username or '' }}" minlength="3" required autofocus>
-            </div>
-            <div class="form-group">
-                <label for="email">Email address</label>
-                <input type="email" id="email" name="email" placeholder="you@example.com"
-                       value="{{ request.form.email or '' }}" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="At least 8 characters"
-                       minlength="8" required>
-                <small>Hashed with a strong one-way algorithm before storage.</small>
-            </div>
-            <div class="form-group">
-                <label for="confirm_password">Confirm password</label>
-                <input type="password" id="confirm_password" name="confirm_password"
-                       placeholder="Repeat your password" required>
-            </div>
-            <button type="submit" class="btn btn-block">Create account</button>
-        </form>
+    <ol class="step-list">
+      <li>
+        <span class="step-number">1</span>
+        <span><strong>Choose a strong password</strong><small>Hashed with scrypt before it ever touches the database.</small></span>
+      </li>
+      <li>
+        <span class="step-number">2</span>
+        <span><strong>Verify with a 6-digit code</strong><small>Each code is random, single-use and expires in five minutes.</small></span>
+      </li>
+      <li>
+        <span class="step-number">3</span>
+        <span><strong>Reach your private dashboard</strong><small>Only a fully verified session can open protected pages.</small></span>
+      </li>
+    </ol>
 
-        <p class="auth-alt">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+    <div class="aside-badge">
+      <span aria-hidden="true">&#128274;</span>
+      <span><strong>No plain-text passwords.</strong> Strong cryptography protects every credential.</span>
     </div>
-</div>
+  </aside>
+
+  <div class="auth-card card">
+    <div class="card-heading">
+      <div class="eyebrow">New account</div>
+      <h2>Create your secure account</h2>
+      <p>Already registered? <a href="{{ url_for('login') }}">Sign in instead</a>.</p>
+    </div>
+
+    <form method="post" action="{{ url_for('register') }}" class="form" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" value="{{ values.username }}"
+               required minlength="3" maxlength="32" autocomplete="username"
+               placeholder="e.g. alex_carter" spellcheck="false">
+        <span class="field-hint">3-32 characters: letters, numbers, dots, dashes, underscores.</span>
+      </div>
+
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" value="{{ values.email }}"
+               required maxlength="254" autocomplete="email"
+               placeholder="you@example.com" spellcheck="false">
+        <span class="field-hint">Used for sign-in, verification codes and password recovery.</span>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-with-action">
+          <input id="password" name="password" type="password" required minlength="10"
+                 autocomplete="new-password" placeholder="Create a strong password"
+                 aria-describedby="password-requirements">
+          <button type="button" class="field-action" data-toggle-password="password"
+                  aria-label="Show password">Show</button>
+        </div>
+        <span class="field-hint" id="password-requirements">10+ characters with upper and lower case, a number and a symbol.</span>
+      </div>
+
+      <div class="field">
+        <label for="confirm_password">Confirm password</label>
+        <div class="input-with-action">
+          <input id="confirm_password" name="confirm_password" type="password" required minlength="10"
+                 autocomplete="new-password" placeholder="Repeat your password">
+          <button type="button" class="field-action" data-toggle-password="confirm_password"
+                  aria-label="Show confirmation password">Show</button>
+        </div>
+      </div>
+
+      <button type="submit" class="button button-block">Create account</button>
+      <p class="form-footnote">By continuing you agree to use this system responsibly. This is an educational assignment build.</p>
+    </form>
+  </div>
+</section>
 {% endblock %}

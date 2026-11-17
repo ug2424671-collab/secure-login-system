@@ -1,48 +1,73 @@
 {% extends "base.html" %}
-{% block title %}Two-Step Verification - SecureAuth{% endblock %}
+{% block title %}Verify your identity &middot; Secure Login System{% endblock %}
+{% block body_class %}verify-page{% endblock %}
+
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-card">
-        <div class="auth-head">
-            <div class="auth-glyph">&#128273;</div>
-            <h1>Two-Step Verification</h1>
-            <p>Step 2 of 2 &mdash; enter the 6-digit code for <strong>{{ username }}</strong>.</p>
-            <div class="steps" aria-label="Authentication progress">
-                <span class="step done">&#10003;</span>
-                <span class="step-line active"></span>
-                <span class="step active">2</span>
-            </div>
-        </div>
+<section class="verify-wrap">
+  <div class="stepper" aria-label="Sign-in progress">
+    <span class="stepper-item is-complete"><span class="stepper-dot">&#10003;</span> Password</span>
+    <span class="stepper-line" aria-hidden="true"></span>
+    <span class="stepper-item is-active"><span class="stepper-dot">2</span> Verification</span>
+    <span class="stepper-line" aria-hidden="true"></span>
+    <span class="stepper-item"><span class="stepper-dot">3</span> Dashboard</span>
+  </div>
 
-        {% if testing_otp %}
-        <div class="otp-banner">
-            <span class="otp-banner-label">DEMO MODE (no email service required)</span>
-            <span class="otp-banner-code">{{ testing_otp }}</span>
-            <span class="otp-banner-hint">This code is also printed in your server terminal. Valid {{ valid_seconds }} seconds.</span>
-        </div>
-        {% else %}
-        <div class="email-note">
-            A 6-digit code has been sent to the email address on your account.
-            Check your inbox and Spam folder. It is valid for {{ valid_seconds // 60 }} minutes.
-        </div>
-        {% endif %}
-
-        <form method="POST" action="{{ url_for('verify_2fa') }}" novalidate>
-            <div class="form-group">
-                <label for="otp">6-digit OTP</label>
-                <input type="text" id="otp" name="otp" class="otp-input" placeholder="000000"
-                       inputmode="numeric" autocomplete="one-time-code"
-                       pattern="[0-9]{6}" maxlength="6" required autofocus>
-                <small>Numbers only. The code expires after {{ valid_seconds }} seconds.</small>
-            </div>
-            <button type="submit" class="btn btn-block">Verify &amp; sign in</button>
-        </form>
-
-        <form method="POST" action="{{ url_for('resend_otp') }}" class="resend-form">
-            <button type="submit" class="btn btn-link">Didn't get it? Generate a new OTP</button>
-        </form>
-
-        <p class="auth-alt"><a href="{{ url_for('logout') }}">Cancel and go back</a></p>
+  <div class="verify-card card">
+    <div class="otp-illustration" aria-hidden="true">
+      <span class="otp-envelope">&#9993;</span>
+      <span class="otp-pulse"></span>
     </div>
-</div>
+
+    <div class="card-heading centered">
+      <div class="eyebrow">Step 2 of 3</div>
+      <h1>{% if demo_code %}Your demo code is ready{% else %}Check your inbox{% endif %}</h1>
+      {% if demo_code %}
+      <p>Hello <strong>{{ username }}</strong>, email delivery is unavailable, so the 6-digit code is shown below instead of being sent to <strong>{{ owner_masked }}</strong>.</p>
+      {% else %}
+      <p>Hello <strong>{{ username }}</strong>, we sent a 6-digit verification code to <strong>{{ owner_masked }}</strong>.</p>
+      {% endif %}
+    </div>
+
+    {% if demo_code %}
+    <div class="demo-code-banner" role="status" aria-live="polite">
+      <span class="demo-code-label">Demo mode &middot; no email needed</span>
+      <strong class="demo-code-value">{{ demo_code }}</strong>
+      <span class="demo-code-note">Use this code below. It is also printed in the server terminal and expires in five minutes.</span>
+    </div>
+    {% endif %}
+
+    <div class="terminal-note">
+      <span class="terminal-dot" aria-hidden="true"></span>
+      <span>Testing locally? The same code is printed clearly in the <strong>server terminal</strong>. Codes are never sent to any other address.</span>
+    </div>
+
+    <form method="post" action="{{ url_for('verify_2fa') }}" class="form otp-form" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="field">
+        <label for="otp" class="centered-label">6-digit verification code</label>
+        <input id="otp" name="otp" type="text" inputmode="numeric" pattern="[0-9]{6}"
+               maxlength="6" required autocomplete="one-time-code" placeholder="000000"
+               class="otp-input" data-otp-input autofocus aria-describedby="otp-timer">
+        <p id="otp-timer" class="otp-meta" data-expires-at="{{ expires_at }}">Preparing timer&hellip;</p>
+      </div>
+
+      <button type="submit" class="button button-block">Verify &amp; open dashboard</button>
+    </form>
+
+    <div class="verify-actions">
+      <form method="post" action="{{ url_for('resend_otp') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="button button-subtle button-small"
+                data-resend-button data-cooldown="{{ cooldown }}"
+                {% if cooldown > 0 %}disabled{% endif %}>
+          {% if cooldown > 0 %}Resend available soon{% else %}Resend code{% endif %}
+        </button>
+      </form>
+      <a class="text-link" href="{{ url_for('login') }}">Use a different account</a>
+    </div>
+
+    <p class="security-caption">Codes expire after five minutes and can be used only once. Five incorrect attempts cancel verification.</p>
+  </div>
+</section>
 {% endblock %}

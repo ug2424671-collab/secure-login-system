@@ -1,77 +1,86 @@
-"""
-init_db.py - Automatic SQLite database initialization for the Secure Login System.
+#!/usr/bin/env python3
+"""Initialise the local SQLite database.
 
-Creates database.db (next to this script) with the required `users` table:
-    id, username, email, password_hash, otp_code, otp_expiry
-
-Run manually with:   python init_db.py            (creates DB only)
-                     python init_db.py --seed     (also adds a demo account)
-The Flask app also calls init_db() automatically at startup.
+Usage:
+    python init_db.py            # create database.db / users table if missing
+    python init_db.py --reset    # DESTRUCTIVE: delete all data and recreate
+    python init_db.py --show     # print schema and row count
 """
 
-import os
+from __future__ import annotations
+
+import argparse
 import sqlite3
+import sys
+from pathlib import Path
 
-# Database lives beside this file so it works from any working directory.
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
-
-
-def get_connection():
-    """Return a SQLite connection with row access by column name."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+from config import Config
+from db import connect, init_db
 
 
-def init_db(seed_demo=False):
-    """Create the users table if it does not exist and optionally seed a demo user."""
-    conn = get_connection()
-    cur = conn.cursor()
+def show_database(path: Path) -> None:
+    with connect(path) as conn:
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        ).fetchall()
+        print(f"Database : {path}")
+        print(f"Tables   : {', '.join(row['name'] for row in tables)}")
+        try:
+            count = conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+            print(f"Users    : {count}")
+        except sqlite3.Error:
+            print("Users    : table not initialised")
+        print("\nSchema:")
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='users'"
+        ).fetchone()
+        print(row["sql"] if row else "(users table missing)")
 
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            username      TEXT NOT NULL UNIQUE,
-            email         TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            otp_code      TEXT,
-            otp_expiry    INTEGER,
-            reset_code    TEXT,
-            reset_expiry  INTEGER,
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Create the Secure Login database.")
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="delete the existing database before creating a fresh one",
     )
-    conn.commit()
+    parser.add_argument(
+        "--show", action="store_true", help="show the schema and a user count"
+    )
+    parser.add_argument(
+        "--seed",
+        action="store_true",
+        help="create the demo login if it does not already exist",
+    )
+    args = parser.parse_args()
 
-    # Migration for databases created by an older version of this script.
-    cur.execute("PRAGMA table_info(users)")
-    columns = {row["name"] for row in cur.fetchall()}
-    if "reset_code" not in columns:
-        cur.execute("ALTER TABLE users ADD COLUMN reset_code TEXT")
-    if "reset_expiry" not in columns:
-        cur.execute("ALTER TABLE users ADD COLUMN reset_expiry INTEGER")
-    conn.commit()
+    path = Path(Config.DATABASE_PATH)
+    if args.reset and path.exists():
+        path.unlink()
+        print(f"Removed existing database: {path}")
 
-    if seed_demo:
-        from werkzeug.security import generate_password_hash
+    init_db(path)
+    print(f"Database ready: {path}")
+    if args.seed or args.reset:
+        from db import seed_demo_account
 
-        cur.execute("SELECT id FROM users WHERE username = ?", ("demo",))
-        if cur.fetchone() is None:
-            cur.execute(
-                "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-                ("demo", "kanu6a6y@gmail.com", generate_password_hash("Demo@1234")),
-            )
-            conn.commit()
-            print("[init_db] Demo account created -> username: demo | email: kanu6a6y@gmail.com | password: Demo@1234")
-
-    conn.close()
-    print("[init_db] SQLite database ready at: {}".format(DB_PATH))
-    return DB_PATH
+        created = seed_demo_account(
+            path,
+            username=Config.DEMO_ACCOUNT_USERNAME,
+            email=Config.OTP_RECIPIENT_OVERRIDE or "demo@example.com",
+            password=Config.DEMO_ACCOUNT_PASSWORD,
+        )
+        print(
+            "Demo login created: "
+            f"{Config.DEMO_ACCOUNT_USERNAME} / {Config.DEMO_ACCOUNT_PASSWORD}"
+            if created
+            else "Demo login already exists (unchanged)."
+        )
+    if args.show:
+        print()
+        show_database(path)
+    return 0
 
 
 if __name__ == "__main__":
-    import sys
-
-    init_db(seed_demo="--seed" in sys.argv)
+    sys.exit(main())

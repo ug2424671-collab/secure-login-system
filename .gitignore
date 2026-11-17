@@ -1,10 +1,11 @@
-# Local secrets
+# Secrets and local runtime data
 .env
-
-# Python
+.venv/
 __pycache__/
-*.pyc
-venv/
-
-# SQLite database (recreated automatically)
+*.py[cod]
 database.db
+database.db-journal
+database.db-wal
+database.db-shm
+.pytest_cache/
+.DS_Store

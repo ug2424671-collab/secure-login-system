@@ -1,22 +1,108 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - SecureAuth{% endblock %}
+{% block title %}Dashboard &middot; Secure Login System{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
 {% block content %}
-<div class="dashboard">
-    <div class="welcome-card">
-        <div class="welcome-icon">&#9989;</div>
-        <h1>Access granted</h1>
-        <p>You have successfully passed both steps of authentication.</p>
-    </div>
+<section class="dashboard-hero">
+  <div>
+    <div class="eyebrow">Protected area</div>
+    <h1>Welcome back, {{ user.username }}.</h1>
+    <p>You are viewing a private dashboard. Access required both your password and a valid one-time code.</p>
+  </div>
+  <div class="session-pill">
+    <span class="status-dot" aria-hidden="true"></span>
+    Secure session active
+  </div>
+</section>
 
-    <div class="profile-card">
-        <h2>Your account</h2>
-        <div class="profile-row"><span>User ID</span><strong>#{{ user['id'] }}</strong></div>
-        <div class="profile-row"><span>Username</span><strong>{{ user['username'] }}</strong></div>
-        <div class="profile-row"><span>Email</span><strong>{{ user['email'] }}</strong></div>
-        <div class="profile-row"><span>Member since</span><strong>{{ user['created_at'] }}</strong></div>
-        <div class="profile-row"><span>Authentication</span><strong>Password + OTP (2FA)</strong></div>
-
-        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-block">Logout</a>
+<section class="stat-grid" aria-label="Security status">
+  <article class="stat-card card">
+    <span class="stat-icon stat-icon-blue" aria-hidden="true">&#10003;</span>
+    <div>
+      <span class="stat-label">2-step verification</span>
+      <strong class="stat-value">Active</strong>
+      <span class="stat-detail">Email OTP confirmed</span>
     </div>
-</div>
+  </article>
+  <article class="stat-card card">
+    <span class="stat-icon stat-icon-violet" aria-hidden="true">#</span>
+    <div>
+      <span class="stat-label">Password storage</span>
+      <strong class="stat-value">scrypt</strong>
+      <span class="stat-detail">Salted hash, never plain text</span>
+    </div>
+  </article>
+  <article class="stat-card card">
+    <span class="stat-icon stat-icon-cyan" aria-hidden="true">&#8635;</span>
+    <div>
+      <span class="stat-label">Last verified sign-in</span>
+      <strong class="stat-value stat-value-small">{{ last_login }}</strong>
+      <span class="stat-detail">This browser session</span>
+    </div>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="card detail-card">
+    <div class="card-heading compact">
+      <div class="eyebrow">Account</div>
+      <h2>Your details</h2>
+    </div>
+    <dl class="detail-list">
+      <div>
+        <dt>Username</dt>
+        <dd>{{ user.username }}</dd>
+      </div>
+      <div>
+        <dt>Email address</dt>
+        <dd>{{ user.email }}</dd>
+      </div>
+      <div>
+        <dt>Member since</dt>
+        <dd>{{ member_since }}</dd>
+      </div>
+      <div>
+        <dt>Account ID</dt>
+        <dd>#{{ "%04d"|format(user.id) }}</dd>
+      </div>
+    </dl>
+    <div class="detail-actions">
+      <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="button button-danger">Sign out securely</button>
+      </form>
+      <a class="button button-ghost" href="{{ url_for('forgot_password') }}">Reset password</a>
+    </div>
+  </article>
+
+  <article class="card tips-card">
+    <div class="card-heading compact">
+      <div class="eyebrow">Security centre</div>
+      <h2>Keep your account safe</h2>
+    </div>
+    <ul class="tip-list">
+      <li>
+        <span class="tip-check" aria-hidden="true">&#10003;</span>
+        <span><strong>Never share your OTP.</strong> Support staff will never ask for a verification code.</span>
+      </li>
+      <li>
+        <span class="tip-check" aria-hidden="true">&#10003;</span>
+        <span><strong>Use a unique password.</strong> Reusing passwords turns one breach into many.</span>
+      </li>
+      <li>
+        <span class="tip-check" aria-hidden="true">&#10003;</span>
+        <span><strong>Sign out on shared devices.</strong> End the session when you finish.</span>
+      </li>
+      <li>
+        <span class="tip-check" aria-hidden="true">&#10003;</span>
+        <span><strong>Watch for unexpected codes.</strong> An unrequested code means someone may have your password.</span>
+      </li>
+    </ul>
+  </article>
+</section>
+
+<section class="info-banner">
+  <span class="info-icon" aria-hidden="true">i</span>
+  <p><strong>How this page is protected:</strong> the route checks for a verified server-side session. Without completing step 2, the server redirects every request back to sign-in.</p>
+</section>
 {% endblock %}
