@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Register - SecureAuth{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-head">
+            <div class="auth-glyph">&#128275;</div>
+            <h1>Create your account</h1>
+            <p>Register to get started with secure access.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}" novalidate>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Choose a username"
+                       value="{{ request.form.username or '' }}" minlength="3" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com"
+                       value="{{ request.form.email or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="At least 8 characters"
+                       minlength="8" required>
+                <small>Hashed with a strong one-way algorithm before storage.</small>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm password</label>
+                <input type="password" id="confirm_password" name="confirm_password"
+                       placeholder="Repeat your password" required>
+            </div>
+            <button type="submit" class="btn btn-block">Create account</button>
+        </form>
+
+        <p class="auth-alt">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+    </div>
+</div>
+{% endblock %}

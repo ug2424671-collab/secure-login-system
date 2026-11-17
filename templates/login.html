@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Login - SecureAuth{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-head">
+            <div class="auth-glyph">&#128274;</div>
+            <h1>Welcome back</h1>
+            <p>Step 1 of 2 &mdash; verify your password.</p>
+            <div class="steps" aria-label="Authentication progress">
+                <span class="step active">1</span>
+                <span class="step-line"></span>
+                <span class="step">2</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" novalidate>
+            <div class="form-group">
+                <label for="identifier">Username or email</label>
+                <input type="text" id="identifier" name="identifier" placeholder="username or email"
+                       value="{{ request.form.identifier or '' }}" required autofocus>
+            </div>
+            <div class="form-group">
+                <div class="label-row">
+                    <label for="password">Password</label>
+                    <a class="inline-link" href="{{ url_for('forgot_password') }}">Forgot password?</a>
+                </div>
+                <input type="password" id="password" name="password" placeholder="Your password" required>
+            </div>
+            <button type="submit" class="btn btn-block">Continue to verification</button>
+        </form>
+
+        <div class="demo-note">
+            <strong>Demo account (seeded automatically):</strong><br>
+            Email: <code>kanu6a6y@gmail.com</code> &nbsp;|&nbsp; Username: <code>demo</code><br>
+            Password: <code>Demo@1234</code>
+        </div>
+
+        <p class="auth-alt">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+    </div>
+</div>
+{% endblock %}

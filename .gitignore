@@ -1,0 +1,10 @@
+# Local secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# SQLite database (recreated automatically)
+database.db

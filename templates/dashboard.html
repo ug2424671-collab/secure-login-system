@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - SecureAuth{% endblock %}
+{% block content %}
+<div class="dashboard">
+    <div class="welcome-card">
+        <div class="welcome-icon">&#9989;</div>
+        <h1>Access granted</h1>
+        <p>You have successfully passed both steps of authentication.</p>
+    </div>
+
+    <div class="profile-card">
+        <h2>Your account</h2>
+        <div class="profile-row"><span>User ID</span><strong>#{{ user['id'] }}</strong></div>
+        <div class="profile-row"><span>Username</span><strong>{{ user['username'] }}</strong></div>
+        <div class="profile-row"><span>Email</span><strong>{{ user['email'] }}</strong></div>
+        <div class="profile-row"><span>Member since</span><strong>{{ user['created_at'] }}</strong></div>
+        <div class="profile-row"><span>Authentication</span><strong>Password + OTP (2FA)</strong></div>
+
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-block">Logout</a>
+    </div>
+</div>
+{% endblock %}
