@@ -12,9 +12,7 @@ Features:
 import hmac
 import os
 import secrets
-import smtplib
 import time
-from email.message import EmailMessage
 from functools import wraps
 
 from flask import (
@@ -28,6 +26,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import mailer
 from env_utils import load_env_file
 from init_db import get_connection, init_db
 
@@ -48,11 +47,6 @@ OTP_VALID_SECONDS = 300          # Login OTP is valid for 5 minutes
 RESET_VALID_SECONDS = 900        # Password reset code is valid for 15 minutes
 MAX_OTP_ATTEMPTS = 5             # Basic brute-force protection on OTP forms
 
-# Gmail SMTP delivery. Credentials are read from environment variables / .env
-# only - they are NEVER stored in the source code or the database.
-GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS", "")
-GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
-
 # "email" = send the code by email only (no terminal/banner fallback).
 # "demo"  = show the code in the terminal and testing banner (no SMTP needed).
 OTP_DELIVERY = os.environ.get("OTP_DELIVERY", "email").strip().lower()
@@ -61,8 +55,8 @@ if OTP_DELIVERY not in ("email", "demo"):
 
 
 def email_configured():
-    """True when both Gmail credentials are present."""
-    return bool(GMAIL_ADDRESS and GMAIL_APP_PASSWORD)
+    """True when SMTP host and credentials are available."""
+    return mailer.is_configured()
 
 # Make sure the database exists before the first request. A demo account is
 # seeded on first run so the system can be demonstrated immediately.
@@ -88,16 +82,15 @@ def print_otp_to_terminal(username, otp):
 
 
 def send_code_email(to_email, username, code, purpose="login"):
-    """Best-effort delivery of a 6-digit code via Gmail SMTP.
+    """Best-effort delivery of a 6-digit code through the configured SMTP server.
 
-    Returns True only when the message was actually sent. When SMTP is not
-    configured (or sending fails), the code is still available in the terminal
-    and in the on-page testing banner, so the flow never breaks.
+    Returns True only when the message was actually sent. In demo mode a failure
+    falls back to the terminal/banner; in email-only mode the caller blocks login.
     """
     if not email_configured():
         if OTP_DELIVERY == "email":
-            print("[mail] ERROR: email-only mode but GMAIL_ADDRESS / GMAIL_APP_PASSWORD "
-                  "are not configured. Codes cannot be delivered.", flush=True)
+            print("[mail] ERROR: email-only mode but SMTP is not configured. "
+                  "Codes cannot be delivered.", flush=True)
         else:
             print("[mail] SMTP not configured; using terminal + banner instead.", flush=True)
         return False
@@ -111,11 +104,7 @@ def send_code_email(to_email, username, code, purpose="login"):
         label = "one-time verification (OTP) code"
         valid_minutes = OTP_VALID_SECONDS // 60
 
-    message = EmailMessage()
-    message["Subject"] = subject
-    message["From"] = GMAIL_ADDRESS
-    message["To"] = to_email
-    message.set_content(
+    body = (
         "Hello {},\n\n"
         "Your {} is: {}\n\n"
         "It expires in {} minutes. If you did not request this code, "
@@ -123,15 +112,13 @@ def send_code_email(to_email, username, code, purpose="login"):
         "- SecureAuth\n".format(username, label, code, valid_minutes)
     )
 
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
-            smtp.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            smtp.send_message(message)
-        print("[mail] Email sent to {} ({})".format(to_email, purpose), flush=True)
-        return True
-    except Exception as exc:
-        print("[mail] Could not send email: {}".format(exc), flush=True)
-        return False
+    ok, detail = mailer.send_email(to_email, subject, body)
+    if ok:
+        print("[mail] Email sent to {} via {} ({})".format(
+            to_email, mailer.SMTP_HOST, purpose), flush=True)
+    else:
+        print("[mail] Could not send email: {}".format(detail), flush=True)
+    return ok
 
 
 def print_reset_to_terminal(username, code):

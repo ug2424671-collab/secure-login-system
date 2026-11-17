@@ -208,7 +208,7 @@ def build_report():
         "Cryptographically random 6-digit OTP with a 5-minute expiry.",
         "Email-only OTP delivery by default: the code is never shown on the server screen.",
         "Optional demo mode can print the OTP in the terminal and testing banner.",
-        "Gmail SMTP credentials read from a local .env file or environment variables only.",
+        "SMTP credentials (Gmail or any provider) read from .env / environment only.",
         "Session-based protected dashboard and secure logout.",
         "Forgot-password flow with an expiring reset code and a re-hashed new password.",
         "Automatic SQLite database initialization and a seeded demo account.",
@@ -515,28 +515,39 @@ def build_report():
     ]:
         pdf.bullet(item)
     pdf.ln(2)
-    pdf.h2("Optional: Email Delivery of the OTP")
+    pdf.h2("Email Delivery Configuration")
     pdf.body(
         "By default OTP_DELIVERY=email: the code is sent only to the address on the "
-        "account and is never printed in the terminal or shown on screen. Generate a "
-        "Gmail App Password, then place GMAIL_ADDRESS and GMAIL_APP_PASSWORD in the "
-        "local .env file (loaded automatically and ignored by git). Login is blocked with "
-        "a clear message until credentials are present. Setting OTP_DELIVERY=demo "
-        "restores the terminal/testing-banner fallback. Credentials are never stored in "
-        "the source code or the database."
+        "account and is never printed in the terminal or shown on screen. The mailer "
+        "supports Gmail or any SMTP provider through SMTP_HOST, SMTP_PORT, SMTP_SECURE, "
+        "SMTP_USER, SMTP_PASS and SMTP_FROM in .env (ignored by git). Login is blocked "
+        "with a clear message until credentials are present. OTP_DELIVERY=demo restores "
+        "the terminal/testing-banner fallback for offline demonstrations. Credentials are "
+        "never stored in the source code or the database."
     )
     pdf.code(
-        "export GMAIL_ADDRESS=kanu6a6y@gmail.com\n"
-        "export GMAIL_APP_PASSWORD='your-16-character-app-password'\n"
-        "python test_email.py\n"
-        "python app.py"
+        "# Gmail (real delivery)\n"
+        "SMTP_HOST=smtp.gmail.com\n"
+        "SMTP_PORT=465\n"
+        "SMTP_SECURE=ssl\n"
+        "SMTP_USER=you@gmail.com\n"
+        "SMTP_PASS=your-16-char-app-password\n"
+        "SMTP_FROM=you@gmail.com\n"
+        "OTP_DELIVERY=email\n\n"
+        "# Ethereal test inbox (view at https://ethereal.email)\n"
+        "SMTP_HOST=smtp.ethereal.email\n"
+        "SMTP_PORT=587\n"
+        "SMTP_SECURE=starttls\n"
+        "SMTP_USER=your-user@ethereal.email\n"
+        "SMTP_PASS=your-ethereal-password\n"
+        "SMTP_FROM=your-user@ethereal.email"
     )
     pdf.body(
-        "If no email arrives, run 'python test_email.py'. It reports whether the "
-        "environment variables are visible to the process and whether Gmail accepted the "
-        "app password. A normal Google password will not work - Gmail requires a "
-        "16-character App Password with 2-Step Verification enabled. The terminal and "
-        "testing banner always display the code as a fallback."
+        "Run 'python test_email.py' to verify the configuration before starting the "
+        "server. It reports whether the variables are visible and whether the provider "
+        "accepted the credentials. For Gmail, a normal password will not work: a "
+        "16-character App Password with 2-Step Verification is required. For port 587 "
+        "use SMTP_SECURE=starttls; for port 465 use SMTP_SECURE=ssl."
     )
     pdf.h2("Route Summary")
     pdf.table(

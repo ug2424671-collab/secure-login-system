@@ -1,73 +1,62 @@
 """
-test_email.py - diagnose Gmail SMTP configuration for the OTP emails.
+test_email.py - diagnose and test the SMTP configuration.
 
 Usage:
     python test_email.py [recipient@example.com]
 
-It checks that GMAIL_ADDRESS and GMAIL_APP_PASSWORD are set, then attempts to
-send a test message through Gmail. Helpful error messages are printed instead of
-silently falling back to the terminal/banner.
+Reads credentials from .env (or the environment), prints the active
+configuration (never the password), then sends a test message.
 """
 
-import os
-import smtplib
 import sys
-from email.message import EmailMessage
 
-from env_utils import load_env_file
+import mailer
 
-load_env_file()
+recipient = (sys.argv[1] if len(sys.argv) > 1 else mailer.SMTP_USER).strip()
+config = mailer.config_summary()
 
-sender = os.environ.get("GMAIL_ADDRESS", "").strip()
-password = os.environ.get("GMAIL_APP_PASSWORD", "").strip()
-recipient = (sys.argv[1] if len(sys.argv) > 1 else sender).strip()
-
-print("GMAIL_ADDRESS      : {}".format(sender or "<not set>"))
-print("GMAIL_APP_PASSWORD : {}".format("set ({} chars)".format(len(password)) if password else "<not set>"))
-print("Recipient          : {}".format(recipient or "<not set>"))
+print("SMTP host   : {}".format(config["host"]))
+print("SMTP port   : {} ({})".format(config["port"], config["secure"]))
+print("SMTP user   : {}".format(config["user"] or "<not set>"))
+print("SMTP sender : {}".format(config["sender"] or "<not set>"))
+print("SMTP pass   : {}".format(config["password"]))
+print("Recipient   : {}".format(recipient or "<not set>"))
 print("-" * 60)
 
-if not sender or not password:
-    print("SMTP is NOT configured. The app will keep using the terminal/banner.")
+if not mailer.is_configured():
+    print("SMTP is NOT configured. Codes cannot be delivered by email.")
     print()
-    print("To enable email delivery:")
-    print("  1. Google Account -> Security -> 2-Step Verification -> App passwords")
-    print("  2. Generate an app password for Mail (16 characters, no spaces).")
-    print("  3. Run:")
-    print("       export GMAIL_ADDRESS={}".format(sender or "you@gmail.com"))
-    print("       export GMAIL_APP_PASSWORD='your-16-char-app-password'")
-    print("       python test_email.py")
+    print("Options:")
+    print("  A) Gmail: create an App Password at https://myaccount.google.com/apppasswords")
+    print("     then set in .env:")
+    print("       SMTP_HOST=smtp.gmail.com")
+    print("       SMTP_PORT=465")
+    print("       SMTP_SECURE=ssl")
+    print("       SMTP_USER=you@gmail.com")
+    print("       SMTP_PASS=your-16-char-app-password")
+    print("       SMTP_FROM=you@gmail.com")
+    print("  B) Any SMTP provider: set SMTP_HOST / SMTP_PORT / SMTP_SECURE /")
+    print("     SMTP_USER / SMTP_PASS / SMTP_FROM in .env.")
     sys.exit(1)
-
-if len(password.replace(" ", "")) != 16:
-    print("WARNING: a Gmail App Password is normally 16 characters (spaces ignored).")
-    print("A normal Google account password will NOT work here.")
-    print()
 
 if not recipient:
     print("No recipient address provided.")
     sys.exit(1)
 
-message = EmailMessage()
-message["Subject"] = "SecureAuth SMTP test"
-message["From"] = sender
-message["To"] = recipient
-message.set_content(
+ok, detail = mailer.send_email(
+    recipient,
+    "SecureAuth SMTP test",
     "This is a test message from the SecureAuth project.\n"
-    "If you received it, OTP email delivery is configured correctly.\n"
+    "If you received it, OTP email delivery is configured correctly.\n",
 )
 
-try:
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
-        smtp.login(sender, password)
-        smtp.send_message(message)
+if ok:
     print("SUCCESS: test email sent to {}.".format(recipient))
-except Exception as exc:
-    print("FAILED: {}".format(exc))
+else:
+    print("FAILED: {}".format(detail))
     print()
     print("Common causes:")
-    print("  - Using the normal Google password instead of a 16-char App Password.")
-    print("  - App passwords require 2-Step Verification to be enabled on the account.")
-    print("  - A typo in GMAIL_ADDRESS, or the account is not a Gmail account.")
-    print("  - Network/firewall blocking smtp.gmail.com port 465.")
+    print("  - Gmail used a normal password instead of a 16-char App Password.")
+    print("  - Wrong SMTP host/port, or the provider blocks this network.")
+    print("  - STARTTLS expected on 587 but SMTP_SECURE is not set to starttls.")
     sys.exit(1)

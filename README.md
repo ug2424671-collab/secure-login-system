@@ -9,8 +9,12 @@ and **password hashing** with a local SQLite database.
 secure_login_system/
 |-- app.py                 # Flask application (all routes & security logic)
 |-- init_db.py             # Automatic database initialization
+|-- env_utils.py           # Tiny .env loader (no extra dependency)
+|-- mailer.py              # SMTP email helper (Gmail or any provider)
+|-- test_email.py          # SMTP diagnostic / test message
 |-- generate_report.py     # Generates Assignment_Report.pdf
 |-- database.db            # SQLite database (created automatically)
+|-- .env.example           # Example email configuration
 |-- requirements.txt
 |-- templates/
 |   |-- base.html
@@ -48,26 +52,42 @@ OTP delivery is controlled by `OTP_DELIVERY` in `.env`:
 
 To use the demo mode instantly, change `.env` to `OTP_DELIVERY=demo` and restart.
 
-### Optional: receive the OTP by email
-SMTP is optional and reads credentials only from environment variables (never from
-source code). To email the code to the address on the account:
+### Email delivery (email-only by default)
+The app works with any SMTP provider. Credentials live only in `.env` (ignored by
+git). `OTP_DELIVERY=email` sends the code to the account address and never shows it
+on screen; `OTP_DELIVERY=demo` is the offline fallback.
 
-1. In your Google Account go to **Security -> 2-Step Verification -> App passwords**
-   and generate an app password for Mail.
-2. Put the credentials in the local `.env` file (loaded automatically, ignored by git):
-   ```bash
-   # edit .env
-   GMAIL_ADDRESS=kanu6a6y@gmail.com
-   GMAIL_APP_PASSWORD=your-16-character-app-password
-   ```
-   Alternatively, export them in the terminal that starts the server.
-3. Verify the configuration, then restart the server:
-   ```bash
-   python test_email.py
-   python app.py
-   ```
-   The OTP will now also be emailed to the login address; the terminal and testing
-   banner keep working as a fallback.
+**Gmail** (real delivery to your phone) - create a 16-character App Password at
+Google Account -> Security -> 2-Step Verification -> App passwords, then set:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=ssl
+SMTP_USER=kanu6a6y@gmail.com
+SMTP_PASS=your-16-character-app-password
+SMTP_FROM=kanu6a6y@gmail.com
+OTP_DELIVERY=email
+```
+
+**Ethereal** (free test inbox, no personal credentials; view at https://ethereal.email):
+
+```env
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_SECURE=starttls
+SMTP_USER=your-user@ethereal.email
+SMTP_PASS=your-ethereal-password
+SMTP_FROM=your-user@ethereal.email
+OTP_DELIVERY=email
+```
+
+Verify and restart:
+
+```bash
+python test_email.py
+python app.py
+```
 
 ### Not receiving emails?
 Run the diagnostic and read its output:
@@ -76,16 +96,15 @@ cd /home/pc/secure_login_system
 source venv/bin/activate
 python test_email.py
 ```
-- `SMTP is NOT configured` means neither `.env` nor the environment contains the two
-  values. Fill in `.env` and restart the server.
-- `FAILED: ...` usually means a normal Google password was used. Gmail requires a
-  16-character **App Password**, and 2-Step Verification must be enabled on the
-  Google account first.
-- Environment variables set in one terminal are not visible to a server started in
-  another terminal - stop and restart `python app.py` in the same terminal.
+- `SMTP is NOT configured` means `SMTP_HOST`, `SMTP_USER` or `SMTP_PASS` is missing
+  from `.env` / the environment. Fill it in and restart the server.
+- `FAILED: ...` with Gmail usually means a normal Google password was used. Gmail
+  requires a 16-character **App Password**, with 2-Step Verification enabled.
+- For port 587 set `SMTP_SECURE=starttls`; for port 465 use `SMTP_SECURE=ssl`.
+- Because the app reads `.env` at startup, restart `python app.py` after changing it.
 
-Either way, the OTP is always shown in the server terminal and on the `/verify-2fa`
-page, so the demo never gets blocked by email problems.
+In email-only mode nothing is shown on screen: login is blocked until SMTP works,
+which is intentional. Use `OTP_DELIVERY=demo` only for offline demonstrations.
 
 ## Forgot Password
 
