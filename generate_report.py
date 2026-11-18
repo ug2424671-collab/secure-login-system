@@ -36,12 +36,22 @@ INK_SOFT = (51, 65, 85)
 MUTED = (100, 116, 139)
 LINE = (219, 227, 244)
 LINE_SOFT = (235, 240, 249)
+LINE_STRONG = (199, 210, 232)
 PALE_BLUE = (239, 246, 255)
 PALE_GREEN = (236, 253, 245)
 GREEN = (4, 120, 87)
 PALE_RED = (254, 242, 242)
 RED = (185, 28, 28)
 WHITE = (255, 255, 255)
+
+SUBMISSION_EMAIL = "registrar@ines.ac.rw"
+SUBMISSION_DATE = "18 November 2026"
+REPOSITORY_URL = "https://github.com/ug2424671-collab/secure-login-system"
+GROUP_MEMBERS = [
+    ("Kiir Kiir Deng Kur", "24/24671"),
+    ("Mohammed Osama Hasan Hossein", "25/27014"),
+    ("Khalil Abdeen Hamid Musa", "25/25483"),
+]
 
 SECTION_DEFS = [
     ("01", "Project Overview", "Purpose, scope, features and requirement coverage"),
@@ -68,8 +78,8 @@ class Report(FPDF):
         self.section_pages: dict[str, int] = {}
         self.set_margins(18, 20, 18)
         self.set_auto_page_break(auto=True, margin=18)
-        self.set_title("Secure Login System - Assignment Report")
-        self.set_author("Secure Login System Project")
+        self.set_title("Secure Login System - Group Assignment Submission")
+        self.set_author("; ".join(name for name, _sid in GROUP_MEMBERS))
         self.set_subject(
             "Flask and SQLite secure authentication with 2-step verification, "
             "password hashing and account recovery"
@@ -80,7 +90,7 @@ class Report(FPDF):
     # Page furniture
     # ------------------------------------------------------------------
     def header(self) -> None:
-        if self.page_no() == 1:
+        if self.page_no() <= 2:
             return
         self.set_y(9)
         self.set_font("helvetica", "B", 6.8)
@@ -88,7 +98,7 @@ class Report(FPDF):
         self.cell(
             120,
             4,
-            "SECURE LOGIN SYSTEM   /   TECHNICAL ASSIGNMENT REPORT",
+            "SECURE LOGIN SYSTEM   /   GROUP ASSIGNMENT SUBMISSION",
             new_x=XPos.RIGHT,
             new_y=YPos.TOP,
         )
@@ -108,7 +118,11 @@ class Report(FPDF):
         self.set_y(-11)
         self.set_font("helvetica", "", 6.8)
         self.set_text_color(*MUTED)
-        self.cell(120, 4, "Prepared for db1434@gmail.com  |  November 2026")
+        self.cell(
+            120,
+            4,
+            "INES-Ruhengeri  |  Group submission  |  18 November 2026",
+        )
         self.cell(0, 4, f"Page {self.page_no()} of {{nb}}", align="R")
 
     # ------------------------------------------------------------------
@@ -368,7 +382,7 @@ class Report(FPDF):
         self.set_xy(18, 26)
         self.set_font("helvetica", "B", 6.8)
         self.set_text_color(*WHITE)
-        self.cell(33, 4, "SECURITY ASSIGNMENT", align="C")
+        self.cell(33, 4, "GROUP ASSIGNMENT", align="C")
 
         self.set_xy(18, 57)
         self.set_font("helvetica", "B", 9)
@@ -399,11 +413,11 @@ class Report(FPDF):
         self.set_xy(18, 164)
         self.set_font("helvetica", "", 8.4)
         self.set_text_color(148, 163, 184)
-        self.cell(30, 5, "PREPARED FOR")
+        self.cell(30, 5, "SUBMITTED TO")
         self.set_xy(18, 169)
         self.set_font("helvetica", "B", 11)
         self.set_text_color(*WHITE)
-        self.cell(0, 5, "db1434@gmail.com")
+        self.cell(0, 5, SUBMISSION_EMAIL)
 
         self.set_xy(18, 181)
         self.set_font("helvetica", "", 8.4)
@@ -412,7 +426,7 @@ class Report(FPDF):
         self.set_xy(18, 186)
         self.set_font("helvetica", "B", 11)
         self.set_text_color(*WHITE)
-        self.cell(0, 5, "17 November 2026")
+        self.cell(0, 5, SUBMISSION_DATE)
 
         self.set_xy(18, 198)
         self.set_font("helvetica", "", 8.4)
@@ -449,6 +463,152 @@ class Report(FPDF):
             4,
             "Architecture  |  Database schema  |  Security analysis  |  Code walkthrough  |  Run guide",
         )
+
+    def submission_details(self) -> None:
+        self.add_page()
+
+        # Header band.
+        self.set_fill_color(*NAVY)
+        self.rect(0, 0, 210, 48, style="F")
+        self.set_xy(18, 15)
+        self.set_font("helvetica", "B", 6.8)
+        self.set_text_color(147, 197, 253)
+        self.cell(0, 4, "INES-RUHENGERI   /   GROUP ASSIGNMENT SUBMISSION")
+        self.set_xy(18, 22)
+        self.set_font("helvetica", "B", 23)
+        self.set_text_color(*WHITE)
+        self.cell(0, 9, "Secure Login System")
+        self.set_xy(18, 34)
+        self.set_font("helvetica", "", 8.6)
+        self.set_text_color(203, 213, 225)
+        self.cell(
+            0,
+            5,
+            "Two-step verification, password hashing and account recovery",
+        )
+
+        # Group members table.
+        self.set_xy(18, 57)
+        self.set_font("helvetica", "B", 9)
+        self.set_text_color(*BLUE_DARK)
+        self.cell(0, 5, "GROUP MEMBERS")
+
+        table_y = 65
+        self.set_fill_color(*NAVY)
+        self.rect(18, table_y, 174, 8, style="F")
+        self.set_xy(21, table_y + 2)
+        self.set_font("helvetica", "B", 7)
+        self.set_text_color(*WHITE)
+        self.cell(120, 4, "NAME")
+        self.cell(0, 4, "STUDENT ID", align="R")
+
+        row_y = table_y + 8
+        for index, (name, student_id) in enumerate(GROUP_MEMBERS):
+            if index % 2 == 0:
+                self.set_fill_color(248, 250, 255)
+                self.rect(18, row_y, 174, 10, style="F")
+            self.set_draw_color(*LINE_SOFT)
+            self.set_line_width(0.2)
+            self.line(18, row_y + 10, 192, row_y + 10)
+            self.set_xy(21, row_y + 2.6)
+            self.set_font("helvetica", "B", 9)
+            self.set_text_color(*INK)
+            self.cell(120, 5, name)
+            self.set_xy(150, row_y + 2.6)
+            self.set_font("helvetica", "", 9)
+            self.set_text_color(*INK_SOFT)
+            self.cell(39, 5, student_id, align="R")
+            row_y += 10
+        self.set_draw_color(*LINE)
+        self.set_line_width(0.35)
+        self.rect(18, table_y, 174, row_y - table_y)
+
+        # Submission metadata in two columns.
+        detail_y = row_y + 14
+        self.set_xy(18, detail_y)
+        self.set_font("helvetica", "B", 9)
+        self.set_text_color(*BLUE_DARK)
+        self.cell(0, 5, "SUBMISSION DETAILS")
+
+        left_y = detail_y + 9
+        self.set_xy(18, left_y)
+        self.set_font("helvetica", "", 7)
+        self.set_text_color(*MUTED)
+        self.cell(0, 4, "SUBMITTED TO")
+        self.set_xy(18, left_y + 5)
+        self.set_font("helvetica", "B", 9.5)
+        self.set_text_color(*INK)
+        self.cell(0, 5, "Office of the Registrar")
+        self.set_xy(18, left_y + 11)
+        self.set_font("helvetica", "", 8.5)
+        self.set_text_color(*INK_SOFT)
+        self.cell(0, 5, "INES-Ruhengeri")
+        self.set_xy(18, left_y + 17)
+        self.set_font("helvetica", "B", 8.5)
+        self.set_text_color(*BLUE_DARK)
+        self.cell(0, 5, SUBMISSION_EMAIL, link=f"mailto:{SUBMISSION_EMAIL}")
+
+        self.set_xy(108, left_y)
+        self.set_font("helvetica", "", 7)
+        self.set_text_color(*MUTED)
+        self.cell(0, 4, "SUBMISSION DATE")
+        self.set_xy(108, left_y + 5)
+        self.set_font("helvetica", "B", 9.5)
+        self.set_text_color(*INK)
+        self.cell(0, 5, SUBMISSION_DATE)
+
+        self.set_xy(108, left_y + 13)
+        self.set_font("helvetica", "", 7)
+        self.set_text_color(*MUTED)
+        self.cell(0, 4, "SOURCE CODE")
+        self.set_xy(108, left_y + 18)
+        self.set_font("helvetica", "", 7.1)
+        self.set_text_color(*BLUE_DARK)
+        self.cell(
+            0,
+            5,
+            "github.com/ug2424671-collab/secure-login-system",
+            link=REPOSITORY_URL,
+        )
+
+        # Declaration and signature block.
+        declaration_y = left_y + 36
+        self.set_xy(18, declaration_y)
+        self.set_font("helvetica", "B", 9)
+        self.set_text_color(*BLUE_DARK)
+        self.cell(0, 5, "DECLARATION")
+        self.set_xy(18, declaration_y + 6)
+        self.set_font("helvetica", "", 8.1)
+        self.set_text_color(*INK_SOFT)
+        self.multi_cell(
+            174,
+            4.6,
+            "We confirm that this report is the result of our own work, that all "
+            "sources used have been acknowledged, and that we understand the "
+            "academic rules on plagiarism. The project and this report were "
+            "prepared for submission to the Office of the Registrar, INES-Ruhengeri.",
+            align="L",
+        )
+
+        signature_y = declaration_y + 31
+        self.set_font("helvetica", "B", 6.5)
+        self.set_text_color(*MUTED)
+        for index, (name, student_id) in enumerate(GROUP_MEMBERS):
+            row = signature_y + index * 14
+            self.set_xy(18, row)
+            self.set_font("helvetica", "", 7.6)
+            self.set_text_color(*INK)
+            self.cell(72, 5, f"{name} ({student_id})")
+            self.set_draw_color(*LINE_STRONG)
+            self.set_line_width(0.3)
+            self.line(96, row + 7, 136, row + 7)
+            self.line(146, row + 7, 186, row + 7)
+            self.set_xy(96, row + 2)
+            self.set_font("helvetica", "", 6.4)
+            self.set_text_color(*MUTED)
+            self.cell(40, 3.5, "Signature")
+            self.set_xy(146, row + 2)
+            self.cell(40, 3.5, "Date")
 
     def contents_and_summary(self) -> None:
         self.add_page()
@@ -1772,6 +1932,7 @@ def build_report(output: Path = OUTPUT, toc_pages: dict[str, int] | None = None)
     pdf = Report(toc_pages=toc_pages)
     pdf.alias_nb_pages()
     pdf.cover()
+    pdf.submission_details()
     pdf.contents_and_summary()
     pdf.section_overview()
     pdf.section_architecture()

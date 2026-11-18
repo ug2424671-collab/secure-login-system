@@ -17,6 +17,21 @@ A complete, locally runnable full-stack authentication assignment built with **F
 
 ---
 
+## Submission details
+
+- **Submitted to:** `registrar@ines.ac.rw`
+- **Institution:** INES-Ruhengeri
+- **Submission date:** 18 November 2026
+- **Report:** `Assignment_Report.pdf`
+
+| Group member | Student ID |
+| --- | --- |
+| Kiir Kiir Deng Kur | 24/24671 |
+| Mohammed Osama Hasan Hossein | 25/27014 |
+| Khalil Abdeen Hamid Musa | 25/25483 |
+
+---
+
 ## 1. Features
 
 | Requirement | Implementation |
